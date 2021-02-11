@@ -2,7 +2,8 @@
 //!
 
 // /////////////////////////////////////////////////////////////////////
-use lettre::{EmailAddress, Envelope, SendableEmail, SmtpClient, Transport};
+use lettre::transport::smtp::authentication::Credentials;
+use lettre::{Message, SmtpTransport, Transport};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Carrier {
@@ -13,7 +14,17 @@ pub enum Carrier {
     None,
 }
 
-pub fn send_text(message: &str, source: &str, carrier: Carrier) {
+pub fn send_text(message: &str, source: &str, phone: &str, carrier: &str) {
+    let carrier: Carrier = match carrier {
+        "att" => Carrier::Att(phone.to_string()),
+        "sprint" => Carrier::Sprint(phone.to_string()),
+        "tmobile" => Carrier::Tmobile(phone.to_string()),
+        "verizon" => Carrier::Verizon(phone.to_string()),
+        "" => Carrier::None,
+        _ => panic!(
+            "Only the following carriers are supported: `att`, `sprint`, `tmobile`, `verizon`"
+        ),
+    };
     let destination = match carrier {
         Carrier::Att(phone) => format!("{}@mms.att.net", phone),
         Carrier::Sprint(phone) => format!("{}@pm.sprint.com", phone),
@@ -21,24 +32,24 @@ pub fn send_text(message: &str, source: &str, carrier: Carrier) {
         Carrier::Verizon(phone) => format!("{}@vtext.com", phone),
         _ => return,
     };
-    let email = SendableEmail::new(
-        Envelope::new(
-            Some(EmailAddress::new(source.to_string()).unwrap()),
-            vec![EmailAddress::new(destination).unwrap()],
-        )
-        .unwrap(),
-        "id".to_string(),
-        message.to_string().into_bytes(),
-    );
+    let email = Message::builder()
+        .from(format!("Me <{}>", source).parse().unwrap())
+        .to(format!("Phone <{}>", destination).parse().unwrap())
+        .subject("COVID-19 Vaccination Sign-up")
+        .body(message.to_string())
+        .unwrap();
 
-    // Open a local connection on port 25
-    let mut mailer = SmtpClient::new_unencrypted_localhost().unwrap().transport();
+    // let creds = Credentials::new("smtp_username".to_string(), "smtp_password".to_string());
+
+    // Open a remote connection to gmail
+    let mailer = SmtpTransport::relay("smtp.gmail.com")
+        .unwrap()
+        // .credentials(creds)
+        .build();
 
     // Send the email
-    let result = mailer.send(email);
-    if result.is_ok() {
-        println!("Text sent");
-    } else {
-        println!("Could not send text: {:?}", result);
+    match mailer.send(&email) {
+        Ok(_) => println!("Email sent successfully!"),
+        Err(e) => panic!("Could not send email: {:?}", e),
     }
 }

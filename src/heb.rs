@@ -14,7 +14,7 @@ use crate::*;
 // This contains the json data of the vaccination information
 const URL: &str = "https://heb-ecom-covid-vaccine.hebdigital-prd.com/vaccine_locations.json";
 
-#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, PartialEq, Serialize)]
 pub struct HebLocation {
     #[serde(deserialize_with = "deserialize_null_default")]
     pub url: String,

@@ -1,3 +1,8 @@
+use std::thread::sleep;
+use std::time::Duration;
+use std::env::var;
+
+use chrono::Local;
 use structopt::StructOpt;
 
 use vax::*;
@@ -32,49 +37,58 @@ struct CliOptions {
     /// Threshold in miles for how far to travel to get vaccine
     #[structopt(short, long, env = "THRESHOLD", default_value = "25")]
     threshold: u16,
+
+    /// How often to ping H.E.B's API in milliseconds
+    #[structopt(short, long, env = "TIMEOUT", default_value = "10000")]
+    timeout: u64,
 }
 
 fn main() {
-    dotenv::dotenv().ok();
+    let dotenv_filename = var("DOTENV_FILE").unwrap_or_else(|_| ".env".to_string());
+    dotenv::from_filename(&dotenv_filename).ok();
     let options = CliOptions::from_args();
-
-    let carrier = options.carrier.to_lowercase();
-    let carrier: Carrier = match carrier.as_str() {
-        "att" => Carrier::Att(options.phone.clone()),
-        "sprint" => Carrier::Sprint(options.phone.clone()),
-        "tmobile" => Carrier::Tmobile(options.phone.clone()),
-        "verizon" => Carrier::Verizon(options.phone.clone()),
-        "" => Carrier::None,
-        _ => panic!(
-            "Only the following carriers are supported: `att`, `sprint`, `tmobile`, `verizon`"
-        ),
-    };
 
     let mut coordinates = Coordinate::new(options.latitude, options.longitude);
     if options.latitude == 0.0 && options.longitude == 0.0 {
         coordinates = find_geo(options.address.clone());
     }
 
-    let available = find_vaccination_locations(coordinates, options.threshold);
-    println!(
-        "Found `{}` open time slots within `{}` miles of `{}`",
-        &available.len(),
-        options.threshold,
-        &options.address
-    );
-    let directions_template = format!(
-        "https://www.google.com/maps/dir/?api=1&origin={},{}&destination=",
-        &coordinates.latitude, &coordinates.longitude
-    );
-    let messages: Vec<String> = available.iter().map(|(d, l)| {
-        let directions_url = format!("{}{},{}", directions_template, l.latitude, l.longitude);
-        println!("[miles: {:.0} `{}`] [signup = {}] [directions = {}]", d, l.city, l.url, &directions_url);
-        directions_url
-    }).collect();
+    let mut already_found: Vec<HebLocation> = Vec::new();
 
-    // if !options.email.is_empty() && !options.phone.is_empty() && carrier != Carrier::None {
-    //     messages.iter().for_each(|msg| {
-    //         send_text(&msg, &options.email, carrier.clone())
-    //     })
-    // }
+    loop {
+        let available = find_vaccination_locations(coordinates, options.threshold);
+        println!(
+            "{}: Found `{}` open time slots within `{}` miles of `{}`",
+            Local::now(),
+            &available.len(),
+            options.threshold,
+            &options.address
+        );
+        let directions_template = format!(
+            "https://www.google.com/maps/dir/?api=1&origin={},{}&destination=",
+            &coordinates.latitude, &coordinates.longitude
+        );
+        available
+            .iter()
+            .map(|(d, l)| {
+                let directions_url = format!("{}{},{}", directions_template, l.latitude, l.longitude);
+                println!(
+                    "[miles: {:.0} `{}`] [signup = {}] [directions = {}]",
+                    d, l.city, l.url, &directions_url
+                );
+                if !already_found.contains(&l) {
+                    webbrowser::open(&directions_url).unwrap();
+                    webbrowser::open(&l.url).unwrap();
+                    already_found.push(l.clone());
+                }
+                directions_url
+            })
+            .filter(|_| {
+                !options.email.is_empty()
+                    && !options.phone.is_empty()
+                    && options.carrier != "".to_string()
+            })
+            .for_each(|msg| send_text(&msg, &options.email, &options.phone, &options.carrier));
+        sleep(Duration::from_millis(options.timeout));
+    }
 }
