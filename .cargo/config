@@ -1,0 +1,25 @@
+[build]
+jobs = 127                # number of parallel jobs, defaults to # of CPUs, can make compile times reduced at the expense of memory
+rustflags = [            # Custom compiler flags
+    # Native compiler causes issues with Tokio v0.3.3 on Mac 10.14.6
+    # "-C", "target-cpu=native",      # Compile for the localhost target (unless overwritten on the command-line)
+    # "-C", "inline-threshold=1024",  # Can improve performance; default for opt-level=3 is 275
+]
+
+[profile.dev]
+opt-level = 0            # Optimization level.
+debug = true             # Include debug info.
+debug-assertions = true  # Enables debug assertions.
+overflow-checks = false  # Enables runtime integer overflow checks.
+lto = false              # Sets link-time optimization.
+panic = 'unwind'         # The panic strategy.
+incremental = true       # Incremental compilation.
+codegen-units = 127      # Number of code generation units.
+
+[profile.release]
+opt-level = 3             # increases optimization; generates faster binary
+debug = false             # Exclude debug info.
+debug-assertions = false  # Disables debug assertions.
+lto = "fat"               # defers optimization; optimizes across crates; generates faster binary
+panic = "abort"           # reduces code generation in binary; generates smaller binary; improves cache utilization
+codegen-units = 1         # reduces worker count during compilation; generates faster and smaller binary
