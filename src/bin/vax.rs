@@ -10,6 +10,11 @@ use vax::*;
 #[derive(Debug, StructOpt)]
 #[structopt(name = "vax", about = "A Covid-19 Vaccination Signup Tool")]
 struct CliOptions {
+    // The number of occurrences of the `verbose` flag
+    /// Verbose mode (-v, -vv, -vvv, etc.)
+    #[structopt(short = "v", long = "verbose", parse(from_occurrences))]
+    verbose: u8,
+
     /// Physical address of individual needing a vaccine
     #[structopt(short, long, env = "ADDRESS", default_value = "")]
     address: String,
@@ -54,16 +59,20 @@ fn main() {
     }
 
     let mut already_found: Vec<HebLocation> = Vec::new();
+    let mut first_time: bool = true;
 
     loop {
         let available = find_vaccination_locations(coordinates, options.threshold);
-        println!(
-            "{}: Found `{}` open time slots within `{}` miles of `{}`",
-            Local::now(),
-            &available.len(),
-            options.threshold,
-            &options.address
-        );
+        if !available.is_empty() || options.verbose > 0 || first_time == true {
+            first_time = false;
+            println!(
+                "{}: Found `{}` open time slots within `{}` miles of `{}`",
+                Local::now(),
+                available.len(),
+                options.threshold,
+                &options.address
+            );
+        }
         let directions_template = format!(
             "https://www.google.com/maps/dir/?api=1&origin={},{}&destination=",
             &coordinates.latitude, &coordinates.longitude
@@ -86,7 +95,7 @@ fn main() {
             .filter(|_| {
                 !options.email.is_empty()
                     && !options.phone.is_empty()
-                    && options.carrier != "".to_string()
+                    && options.carrier != *""
             })
             .for_each(|msg| send_text(&msg, &options.email, &options.phone, &options.carrier));
         sleep(Duration::from_millis(options.timeout));

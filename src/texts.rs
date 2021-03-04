@@ -2,7 +2,7 @@
 //!
 
 // /////////////////////////////////////////////////////////////////////
-use lettre::transport::smtp::authentication::Credentials;
+// use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
 
 #[derive(Clone, Debug, PartialEq)]

@@ -23,7 +23,7 @@ impl Coordinate {
 pub fn find_geo(address: String) -> Coordinate {
     let osm = Openstreetmap::new();
     let resource: Vec<Point<f64>> = osm.forward(&address).unwrap();
-    let point = resource.iter().next().unwrap();
+    let point = resource.get(0).unwrap();
     Coordinate {
         latitude: point.0.y,
         longitude: point.0.x,

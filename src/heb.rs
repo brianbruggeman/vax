@@ -5,7 +5,6 @@
 use geoutils::Location;
 use reqwest::blocking::get;
 use serde::{Deserialize, Deserializer, Serialize};
-use serde_json;
 
 const METERS_TO_MILES: f64 = 0.000621371;
 
@@ -44,7 +43,7 @@ pub struct HebResponse {
 
 /// Finds the locations currently open within the specified threshold
 ///   and orders by distance from the home address.
-pub fn find_vaccination_locations<'a>(
+pub fn find_vaccination_locations(
     home_coordinates: Coordinate,
     distance_threshold: u16,
 ) -> Vec<(f64, HebLocation)> {
