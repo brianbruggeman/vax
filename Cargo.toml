@@ -1,19 +1,20 @@
 [package]
 name = "vax"
-version = "0.2.0"
-authors = ["Brian Bruggeman <Brian.M.Bruggeman@gmail.com>"]
+version = "0.3.0"
+authors = ["Brian Bruggeman <1350114+brianbruggeman@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
-dotenv = "0.15.0"
-geo = "0.17.0"
-geocoding = "0.3.1"
-lettre = "0.10.0-alpha.4"
-reqwest = { version = "0.11.0", features = ["blocking"] }
-serde = "1.0.123"
-serde_json = "1.0.62"
-structopt = "0.3.21"
-lettre_email = "0.9.4"
-geoutils = "0.4.0"
-webbrowser = "0.5.5"
+ansi_term = "0.12.1"
 chrono = "0.4.19"
+dotenv = "0.15.0"
+geo = "0.17.1"
+geocoding = "0.3.1"
+geoutils = "0.4.0"
+rayon = "1.5.0"
+reqwest = { version = "0.11.1", features = ["blocking"] }
+serde = "1.0.124"
+serde_json = "1.0.64"
+structopt = "0.3.21"
+webbrowser = "0.5.5"
+spinners = "1.2.0"

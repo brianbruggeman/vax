@@ -1,8 +1,11 @@
+use std::env::var;
 use std::thread::sleep;
 use std::time::Duration;
-use std::env::var;
 
+use ansi_term::Colour;
 use chrono::Local;
+use rayon::prelude::*;
+use spinners::{Spinner, Spinners};
 use structopt::StructOpt;
 
 use vax::*;
@@ -27,24 +30,20 @@ struct CliOptions {
     #[structopt(long, env = "LONGITUDE", default_value = "0.0")]
     longitude: f64,
 
-    /// Phone carrier
-    #[structopt(short, long, env = "CARRIER", default_value = "")]
-    carrier: String,
+    /// Hide signup in browser
+    #[structopt(long, env = "HIDE_SIGNUP")]
+    hide_signup: bool,
 
-    /// Email address of program user
-    #[structopt(short, long, env = "EMAIL", default_value = "")]
-    email: String,
-
-    /// Phone number of individual needing a vaccine
-    #[structopt(short, long, env = "PHONE", default_value = "")]
-    phone: String,
+    /// Open map
+    #[structopt(long, env = "SHOW_MAP")]
+    map: bool,
 
     /// Threshold in miles for how far to travel to get vaccine
-    #[structopt(short, long, env = "THRESHOLD", default_value = "25")]
+    #[structopt(short = "t", long, env = "THRESHOLD", default_value = "25")]
     threshold: u16,
 
     /// How often to ping H.E.B's API in milliseconds
-    #[structopt(short, long, env = "TIMEOUT", default_value = "10000")]
+    #[structopt(short = "T", long, env = "TIMEOUT", default_value = "10000")]
     timeout: u64,
 }
 
@@ -59,45 +58,56 @@ fn main() {
     }
 
     let mut already_found: Vec<HebLocation> = Vec::new();
-    let mut first_time: bool = true;
+
+    println!(
+        "{}: Searching for open time slots within '{}' miles of '{}'",
+        Colour::Blue.paint(format!("{}", Local::now())),
+        Colour::Green.paint(format!("{}", options.threshold)),
+        Colour::Cyan.paint(format!("{}", &options.address)),
+    );
 
     loop {
+        let sp = Spinner::new(Spinners::Line, "Waiting for new vaccination spots...".into());
         let available = find_vaccination_locations(coordinates, options.threshold);
-        if !available.is_empty() || options.verbose > 0 || first_time == true {
-            first_time = false;
-            println!(
-                "{}: Found `{}` open time slots within `{}` miles of `{}`",
-                Local::now(),
-                available.len(),
-                options.threshold,
-                &options.address
-            );
+        sp.stop();
+        let new_found: usize = available.iter().filter(|(_d, h)| !&already_found.contains(&h)).map(|(_d, _h)| 1).sum();
+        if new_found > 0 {
+            println!("done.");
         }
-        let directions_template = format!(
-            "https://www.google.com/maps/dir/?api=1&origin={},{}&destination=",
-            &coordinates.latitude, &coordinates.longitude
-        );
-        available
-            .iter()
-            .map(|(d, l)| {
-                let directions_url = format!("{}{},{}", directions_template, l.latitude, l.longitude);
+        let directions_template = format!("https://www.google.com/maps/dir/?api=1&origin={},{}&destination=", &coordinates.latitude, &coordinates.longitude);
+        already_found.extend({
+            if (!available.is_empty() || options.verbose > 0) && new_found > 0 {
                 println!(
-                    "[miles: {:.0} `{}`] [signup = {}] [directions = {}]",
-                    d, l.city, l.url, &directions_url
+                    "{}: Found `{}` open time slots within `{}` miles of `{}`",
+                    Colour::Blue.paint(format!("{}", Local::now())),
+                    Colour::Yellow.paint(format!("{}", available.len())),
+                    Colour::Green.paint(format!("{}", options.threshold)),
+                    Colour::Cyan.paint(format!("{}", &options.address.to_string())),
                 );
-                if !already_found.contains(&l) {
-                    webbrowser::open(&directions_url).unwrap();
-                    webbrowser::open(&l.url).unwrap();
-                    already_found.push(l.clone());
-                }
-                directions_url
-            })
-            .filter(|_| {
-                !options.email.is_empty()
-                    && !options.phone.is_empty()
-                    && options.carrier != *""
-            })
-            .for_each(|msg| send_text(&msg, &options.email, &options.phone, &options.carrier));
+            }
+            available
+                .par_iter()
+                .map(|(d, l)| {
+                    let directions_url = format!("{}{},{}", directions_template, l.latitude, l.longitude);
+                    if !already_found.contains(&l) {
+                        println!(
+                            "[{}: {} miles] [signup = {}] [directions = {}]",
+                            Colour::Purple.paint(format!("{}, {}", l.city.to_string(), l.state.to_string())),
+                            Colour::Yellow.paint(format!("{:.0}", d)),
+                            Colour::Cyan.paint(format!("{}", l.url.to_string())),
+                            Colour::Blue.paint(format!("{}", &directions_url.to_string())),
+                        );
+                        if options.map {
+                            webbrowser::open(&directions_url).unwrap();
+                        }
+                        if !options.hide_signup {
+                            webbrowser::open(&l.url).unwrap();
+                        }
+                    }
+                    l.clone()
+                })
+                .collect::<Vec<HebLocation>>()
+        });
         sleep(Duration::from_millis(options.timeout));
     }
 }
