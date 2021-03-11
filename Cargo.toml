@@ -1,6 +1,6 @@
 [package]
 name = "vax"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Brian Bruggeman <1350114+brianbruggeman@users.noreply.github.com>"]
 edition = "2018"
 
@@ -12,9 +12,12 @@ geo = "0.17.1"
 geocoding = "0.3.1"
 geoutils = "0.4.0"
 rayon = "1.5.0"
-reqwest = { version = "0.11.1", features = ["blocking"] }
+reqwest = { version = "0.11.2", features = ["blocking"] }
 serde = "1.0.124"
 serde_json = "1.0.64"
+spinners = "1.2.0"
 structopt = "0.3.21"
 webbrowser = "0.5.5"
-spinners = "1.2.0"
+
+[build-dependencies]
+cfg_aliases = "0.1.1"

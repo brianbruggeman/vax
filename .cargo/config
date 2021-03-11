@@ -1,5 +1,5 @@
 [build]
-jobs = 127                # number of parallel jobs, defaults to # of CPUs, can make compile times reduced at the expense of memory
+jobs = 127               # number of parallel jobs, defaults to # of CPUs, can make compile times reduced at the expense of memory
 rustflags = [            # Custom compiler flags
     # Native compiler causes issues with Tokio v0.3.3 on Mac 10.14.6
     # "-C", "target-cpu=native",      # Compile for the localhost target (unless overwritten on the command-line)

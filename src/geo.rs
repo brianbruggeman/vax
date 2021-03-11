@@ -20,7 +20,13 @@ impl Coordinate {
 pub fn find_geo(address: String) -> Coordinate {
     let osm = Openstreetmap::new();
     let resource: Vec<Point<f64>> = osm.forward(&address).unwrap();
-    let point = resource.get(0).unwrap();
+    let point = match resource.get(0) {
+        Some(p) => p,
+        None => {
+            eprintln!("Could not match address: '{}'", &address);
+            std::process::exit(1);
+        }
+    };
     Coordinate {
         latitude: point.0.y,
         longitude: point.0.x,

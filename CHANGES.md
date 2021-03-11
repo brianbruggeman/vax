@@ -1,5 +1,18 @@
 # Release History
 
+## 0.4.0 (2021-03-06)
+Updates for Windows
+
+- Spinners library fails to run on Windows so a build.rs file was added
+  which checks for the Windows platform at build time and dynamically
+  generates a new cfg, spin, which is then used to cut out spinners
+  on Windows.
+- Clippy warnings removed.
+- Dead and commented out code removed.
+- Improved error handling for missing address or missing lat/lon
+- Reran formatting
+- Upgraded packages
+  
 ## 0.3.0 (2021-03-06)
 Improvements to CLI usability
 

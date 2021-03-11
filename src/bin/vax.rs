@@ -5,6 +5,7 @@ use std::time::Duration;
 use ansi_term::Colour;
 use chrono::Local;
 use rayon::prelude::*;
+#[cfg(spin)]
 use spinners::{Spinner, Spinners};
 use structopt::StructOpt;
 
@@ -63,12 +64,14 @@ fn main() {
         "{}: Searching for open time slots within '{}' miles of '{}'",
         Colour::Blue.paint(format!("{}", Local::now())),
         Colour::Green.paint(format!("{}", options.threshold)),
-        Colour::Cyan.paint(format!("{}", &options.address)),
+        Colour::Cyan.paint(&options.address.to_string()),
     );
 
     loop {
+        #[cfg(spin)]
         let sp = Spinner::new(Spinners::Line, "Waiting for new vaccination spots...".into());
         let available = find_vaccination_locations(coordinates, options.threshold);
+        #[cfg(spin)]
         sp.stop();
         let new_found: usize = available.iter().filter(|(_d, h)| !&already_found.contains(&h)).map(|(_d, _h)| 1).sum();
         if new_found > 0 {
@@ -82,7 +85,7 @@ fn main() {
                     Colour::Blue.paint(format!("{}", Local::now())),
                     Colour::Yellow.paint(format!("{}", available.len())),
                     Colour::Green.paint(format!("{}", options.threshold)),
-                    Colour::Cyan.paint(format!("{}", &options.address.to_string())),
+                    Colour::Cyan.paint(&options.address.to_string()),
                 );
             }
             available
@@ -94,8 +97,8 @@ fn main() {
                             "[{}: {} miles] [signup = {}] [directions = {}]",
                             Colour::Purple.paint(format!("{}, {}", l.city.to_string(), l.state.to_string())),
                             Colour::Yellow.paint(format!("{:.0}", d)),
-                            Colour::Cyan.paint(format!("{}", l.url.to_string())),
-                            Colour::Blue.paint(format!("{}", &directions_url.to_string())),
+                            Colour::Cyan.paint(l.url.to_string()),
+                            Colour::Blue.paint(&directions_url),
                         );
                         if options.map {
                             webbrowser::open(&directions_url).unwrap();

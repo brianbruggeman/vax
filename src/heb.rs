@@ -64,9 +64,7 @@ fn check_availability(url: &str) -> bool {
         Err(_) => false,
         Ok(r) => match r.text() {
             Err(_) => false,
-            Ok(r) => {
-                !r.contains("Appointments are no longer available for this location.")
-            }
+            Ok(r) => !r.contains("Appointments are no longer available for this location."),
         },
     }
 }
@@ -103,15 +101,3 @@ pub fn find_vaccination_locations(home_coordinates: Coordinate, distance_thresho
         },
     }
 }
-
-// def generate_vaccination_messages(home_coordinates, locations):
-//     lat, lon = home_coordinates
-//     directions_template = f'https://www.google.com/maps/dir/?api=1&origin={lat},{lon}&destination={{}},{{}}'
-
-//     messages = []
-//     for distance in sorted(locations):
-//         location = locations[distance]
-//         msg = f"[miles: {distance:3.0f} `{location['city'].capitalize()}`] {location['name']}: [signup = {location['url']}] [directions = {directions_template.format(location['latitude'], location['longitude'])}]"
-//         messages.append(msg)
-//         print(f"{msg}")
-//     return messages
