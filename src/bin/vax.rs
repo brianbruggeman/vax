@@ -1,9 +1,11 @@
 use std::env::var;
+use std::fs;
 use std::thread::sleep;
 use std::time::Duration;
 
 use ansi_term::Colour;
 use chrono::Local;
+use dialoguer::{theme::ColorfulTheme, Input};
 use rayon::prelude::*;
 #[cfg(spin)]
 use spinners::{Spinner, Spinners};
@@ -32,12 +34,16 @@ struct CliOptions {
     longitude: f64,
 
     /// Hide signup in browser
-    #[structopt(long, env = "HIDE_SIGNUP")]
+    #[structopt(long, parse(try_from_str = from_string_bool), env = "HIDE_SIGNUP", default_value = "false")]
     hide_signup: bool,
 
     /// Open map
-    #[structopt(long, env = "SHOW_MAP")]
+    #[structopt(long, parse(try_from_str = from_string_bool), env = "SHOW_MAP", default_value = "false")]
     map: bool,
+
+    /// Run pre-checks
+    #[structopt(long = "pre-check", parse(try_from_str = from_string_bool), env = "PRE_CHECK", default_value = "false")]
+    pre_check: bool,
 
     /// Threshold in miles for how far to travel to get vaccine
     #[structopt(short = "t", long, env = "THRESHOLD", default_value = "25")]
@@ -48,10 +54,35 @@ struct CliOptions {
     timeout: u64,
 }
 
+fn from_string_bool(value: &str) -> Result<bool, Box<dyn std::error::Error>> {
+    let lc_value: String = value.to_lowercase();
+    match lc_value.as_str() {
+        "t" | "true" | "1" | "on" | "yes" | "y" => Ok(true),
+        "f" | "false" | "0" | "off" | "no" | "n" => Ok(false),
+        _ => panic!("Invalid boolean value: {}", value),
+    }
+}
+
 fn main() {
     let dotenv_filename = var("DOTENV_FILE").unwrap_or_else(|_| ".env".to_string());
-    dotenv::from_filename(&dotenv_filename).ok();
-    let options = CliOptions::from_args();
+    let dotenv_path = std::path::Path::new(&dotenv_filename);
+    dotenv::from_path(&dotenv_path).ok();
+    let mut options = CliOptions::from_args();
+
+    if options.address == *"" {
+        options.address = Input::with_theme(&ColorfulTheme::default())
+            .with_prompt("Address needed: (e.g. 1234 Street, City, State, Zip)")
+            .interact_text()
+            .unwrap();
+        let data = match &dotenv_path.exists() {
+            true => fs::read_to_string(&dotenv_filename).expect("Unable to read file"),
+            false => String::new(),
+        };
+        let mut data = data.split('\n').map(|s| s.to_string()).collect::<Vec<String>>();
+        data.push(format!("ADDRESS=\"{}\"", &options.address));
+        let data: String = data.join("\n");
+        fs::write(&dotenv_filename, &data.as_bytes()).expect("Unable to write file");
+    }
 
     let mut coordinates = Coordinate::new(options.latitude, options.longitude);
     if options.latitude == 0.0 && options.longitude == 0.0 {
@@ -64,13 +95,13 @@ fn main() {
         "{}: Searching for open time slots within '{}' miles of '{}'",
         Colour::Blue.paint(format!("{}", Local::now())),
         Colour::Green.paint(format!("{}", options.threshold)),
-        Colour::Cyan.paint(&options.address.to_string()),
+        Colour::Cyan.paint(&options.address),
     );
 
     loop {
         #[cfg(spin)]
         let sp = Spinner::new(Spinners::Line, "Waiting for new vaccination spots...".into());
-        let available = find_vaccination_locations(coordinates, options.threshold);
+        let available = find_vaccination_locations(coordinates, options.threshold, options.pre_check);
         #[cfg(spin)]
         sp.stop();
         let new_found: usize = available.iter().filter(|(_d, h)| !&already_found.contains(&h)).map(|(_d, _h)| 1).sum();

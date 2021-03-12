@@ -71,7 +71,7 @@ fn check_availability(url: &str) -> bool {
 
 /// Finds the locations currently open within the specified threshold
 ///   and orders by distance from the home address.
-pub fn find_vaccination_locations(home_coordinates: Coordinate, distance_threshold: u16) -> Vec<(f64, HebLocation)> {
+pub fn find_vaccination_locations(home_coordinates: Coordinate, distance_threshold: u16, run_precheck: bool) -> Vec<(f64, HebLocation)> {
     let source = Location::new(home_coordinates.latitude, home_coordinates.longitude);
     match get(URL) {
         Err(_) => Vec::new(),
@@ -92,7 +92,7 @@ pub fn find_vaccination_locations(home_coordinates: Coordinate, distance_thresho
                             (miles, loc.clone())
                         })
                         .filter(|(d, _)| (distance_threshold > 0 && *d <= distance_threshold as f64) || distance_threshold == 0)
-                        .filter(|(_, h)| check_availability(&h.url))
+                        .filter(|(_, h)| if run_precheck { check_availability(&h.url) } else { true })
                         .collect();
                     locations.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
                     locations

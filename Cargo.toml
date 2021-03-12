@@ -1,12 +1,15 @@
 [package]
 name = "vax"
-version = "0.4.0"
+version = "0.5.0-dev"
 authors = ["Brian Bruggeman <1350114+brianbruggeman@users.noreply.github.com>"]
 edition = "2018"
+description = "A vaccination sign-up tool for Covid-19"
+license = "MIT"
 
 [dependencies]
 ansi_term = "0.12.1"
 chrono = "0.4.19"
+dialoguer = "0.7.1"
 dotenv = "0.15.0"
 geo = "0.17.1"
 geocoding = "0.3.1"
@@ -15,9 +18,14 @@ rayon = "1.5.0"
 reqwest = { version = "0.11.2", features = ["blocking"] }
 serde = "1.0.124"
 serde_json = "1.0.64"
-spinners = "1.2.0"
 structopt = "0.3.21"
 webbrowser = "0.5.5"
 
+[target.'cfg(not(windows))'.dependencies]
+spinners = "1.2.0"
+
 [build-dependencies]
 cfg_aliases = "0.1.1"
+
+[package.metadata.bundle]
+identifier = "io.github.brianbruggeman.vax"

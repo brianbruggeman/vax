@@ -1,4 +1,6 @@
 # Vax
+[![continuous integration](https://github.com/brianbruggeman/vax/actions/workflows/ci.yml/badge.svg)](https://github.com/brianbruggeman/vax/actions)
+
 
 A COVD-19 Signup tool for use with H.E.B's Backend API.
 

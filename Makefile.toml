@@ -1,0 +1,71 @@
+[tasks.fmt]
+description = "Run formatter"
+install_crate = "rustfmt"
+command = "cargo"
+args = ["fmt"]
+
+[tasks.check-style]
+description = "Run style checker"
+install_crate = "rustfmt"
+command = "cargo"
+args = ["fmt", "--", "--check"]
+
+[tasks.check-lint]
+description = "Lint vax code base"
+command = "cargo"
+args = ["clippy"]
+
+[tasks.fast-compile]
+description = "Fast compile code"
+command = "cargo"
+args = ["check"]
+
+[tasks.build]
+description = "Fast compile code"
+command = "cargo"
+args = ["build", "--release"]
+dependencies = ["check-lint", "check-style", "fast-compile"]
+
+[tasks.test]
+description = "Run tests"
+command = "cargo"
+args = ["test"]
+
+[tasks.push]
+description = "Push changes to origin for current branch"
+command = "git"
+args = ["push"]
+dependencies = ["check-lint", "check-style", "fast-compile", "test"]
+
+[tasks.run]
+description = "Run vax app"
+command = "cargo"
+args = ["run", "--release"]
+dependencies = ["build"]
+
+[tasks.bundle]
+description = "Creating application for system"
+install_crate = "cargo-bundle"
+command = "cargo"
+args = ["bundle", "--release"]
+dependencies = ["build"]
+
+[tasks.cli-install]
+description = "Installing CLI"
+command = "cargo"
+args = ["install", "--path", "."]
+
+[tasks.install]
+run_task = [
+    { name = "system-install-win", condition = { platforms = ["windows"] } },
+    { name = "system-install-mac", condition = { platforms = ["mac"] } },
+]
+
+[tasks.system-install-mac]
+dependencies = ["bundle", "cli-install"]
+script = '''
+cp -R target/release/bundle/osx/vax.app /Applications/
+'''
+
+[tasks.system-install-win]
+dependencies = ["bundle", "cli-install"]

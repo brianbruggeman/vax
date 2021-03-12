@@ -1,5 +1,11 @@
 # Release History
 
+## 0.5.0 (?)
+
+- Adds native bundling for operating systems
+- Adds option for filtering out appointments that are already taken
+- Adds cargo-make
+
 ## 0.4.0 (2021-03-06)
 Updates for Windows
 
