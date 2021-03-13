@@ -6,6 +6,7 @@
 - Adds option for filtering out appointments that are already taken
 - Adds cargo-make
 - Adds continuous integration
+- Adds headless mode for further automation
 
 ## 0.4.0 (2021-03-06)
 Updates for Windows

@@ -2,8 +2,10 @@
 //!
 
 // /////////////////////////////////////////////////////////////////////
+
 use geocoding::{Forward, Openstreetmap, Point};
 
+/// Represents a latitude and longitude coordinate on Earth
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Coordinate {
     pub latitude: f64,
@@ -17,18 +19,20 @@ impl Coordinate {
 }
 
 /// Finds latitude and longitude given a physical address
-pub fn find_geo(address: String) -> Coordinate {
+pub async fn find_geo(address: String) -> Result<Coordinate, Box<dyn std::error::Error>> {
     let osm = Openstreetmap::new();
-    let resource: Vec<Point<f64>> = osm.forward(&address).unwrap();
+    let resource: Vec<Point<f64>> = osm.forward(&address)?;
     let point = match resource.get(0) {
         Some(p) => p,
         None => {
-            eprintln!("Could not match address: '{}'", &address);
+            error!("Could not match address: '{}'", &address);
             std::process::exit(1);
         }
     };
-    Coordinate {
+    let coord = Coordinate {
         latitude: point.0.y,
         longitude: point.0.x,
-    }
+    };
+    debug!("Using coordinates: lat={}, lon={}", coord.latitude, coord.longitude);
+    Ok(coord)
 }
