@@ -33,7 +33,9 @@ async fn find_gecko() -> Option<(i32, sysinfo::Process)> {
     for (pid, process) in sys.get_processes() {
         if process.name().contains("geckodriver") {
             debug!("Found geckodriver running on pid: {}", pid);
-            return Some((*pid, process.clone()));
+            let process = process.clone();
+            let pid = *pid;
+            return Some((pid, process));
         }
     }
     None
