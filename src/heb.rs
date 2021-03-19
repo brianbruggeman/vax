@@ -2,8 +2,8 @@
 //!
 
 // /////////////////////////////////////////////////////////////////////
-use std::{thread, time};
 use std::iter::Iterator;
+use std::{thread, time};
 
 use fantoccini::{elements::Element, Client, Locator};
 use geoutils::Location;
@@ -99,7 +99,7 @@ pub async fn auto_signup(url: &str, headless: bool, profile: &str) -> Result<(),
     let mut browser = goto(url, headless, profile).await?;
     let page_1 = handle_page_1(&mut browser).await?;
     if !page_1 {
-        return Ok(())
+        return Ok(());
     }
     wait_for_human_entry(&mut browser).await;
     Ok(())
@@ -114,9 +114,13 @@ async fn wait_for_human_entry(mut browser: &mut Client) {
             break;
         }
         let gone = detect_empty(&mut browser).await;
-        if gone { break; }
+        if gone {
+            break;
+        }
         let error = detect_error(&mut browser).await;
-        if error { break; }
+        if error {
+            break;
+        }
         thread::sleep(poll_time);
     }
 }
@@ -199,7 +203,7 @@ async fn handle_page_1(mut browser: &mut Client) -> Result<bool, Box<dyn std::er
         }
         let source_contains_error = detect_error(&mut browser).await;
         if source_contains_error {
-            return Ok(false)
+            return Ok(false);
         }
         let source = &browser.source().await?;
         if source.contains("Continue") && selected_shot && selected_date && selected_time {
@@ -212,9 +216,9 @@ async fn handle_page_1(mut browser: &mut Client) -> Result<bool, Box<dyn std::er
             click(&mut button, &mut rng).await?;
             let source_contains_error = detect_error(&mut browser).await;
             if source_contains_error {
-                return Ok(false)
+                return Ok(false);
             } else {
-                return Ok(true)
+                return Ok(true);
             }
         }
     }

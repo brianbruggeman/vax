@@ -23,7 +23,7 @@ async fn terminate_gecko() -> Result<(), Box<dyn std::error::Error>> {
         warn!("Terminating geckodriver is running on pid: {}.", pid);
         process.kill(Signal::Kill);
         warn!("geckodriver({}) is terminated.", pid);
-    } 
+    }
     Ok(())
 }
 
@@ -33,7 +33,7 @@ async fn find_gecko() -> Option<(i32, sysinfo::Process)> {
     for (pid, process) in sys.get_processes() {
         if process.name().contains("geckodriver") {
             debug!("Found geckodriver running on pid: {}", pid);
-            return Some((*pid, process.clone()))
+            return Some((*pid, process.clone()));
         }
     }
     None
@@ -55,7 +55,8 @@ async fn start_gecko() -> Result<(), Box<dyn std::error::Error>> {
     thread::sleep(time::Duration::from_millis(300));
     let mut sys = System::new_all();
     sys.refresh_all();
-    if let Some((_pid, _process)) = find_gecko().await {} else {
+    if let Some((_pid, _process)) = find_gecko().await {
+    } else {
         error!("Failed to start geckodriver.  Terminating");
         std::process::exit(1);
     }

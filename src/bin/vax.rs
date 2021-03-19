@@ -46,7 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let directions_url = format!("{}{},{}", directions_template, l.latitude, l.longitude);
             if !already_found.contains(&l) {
                 let signup_message = match (options.map, options.hide_signup, options.auto) {
-                    (false, true, false)  => {
+                    (false, true, false) => {
                         format!(
                             "[{}: {} miles] [signup = {}] [directions = {}]",
                             Colour::Purple.paint(format!("{}, {}", l.city.to_string(), l.state.to_string())),
@@ -55,7 +55,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             Colour::Blue.paint(&directions_url),
                         )
                     }
-                    (true, true, false)  => {
+                    (true, true, false) => {
                         format!(
                             "[{}: {} miles] [signup = {}]",
                             Colour::Purple.paint(format!("{}, {}", l.city.to_string(), l.state.to_string())),
@@ -63,14 +63,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             Colour::Cyan.paint(l.url.to_string()),
                         )
                     }
-                    (_, false, false)  => {
+                    (_, false, false) => {
                         format!(
                             "[{}: {} miles]",
                             Colour::Purple.paint(format!("{}, {}", l.city.to_string(), l.state.to_string())),
                             Colour::Yellow.paint(format!("{:.0}", d)),
                         )
                     }
-                    (_, _, true)  => {
+                    (_, _, true) => {
                         format!(
                             "[{}: {} miles] Signup is automated...",
                             Colour::Purple.paint(format!("{}, {}", l.city.to_string(), l.state.to_string())),
