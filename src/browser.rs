@@ -132,12 +132,11 @@ pub async fn launch_browser(headless: bool, profile: &str) -> Result<Client, Box
     Ok(c)
 }
 
-pub async fn goto(url: &str, headless: bool, profile: &str) -> Result<Client, Box<dyn std::error::Error>> {
-    let mut browser = launch_browser(headless, profile).await?;
+pub async fn goto(url: &str, browser: &mut Client) -> Result<(), Box<dyn std::error::Error>> {
     browser.goto(url).await.unwrap_or_else(|why| {
         error!("{}", why);
         error!("Goto failed.");
         std::process::exit(1);
     });
-    Ok(browser)
+    Ok(())
 }

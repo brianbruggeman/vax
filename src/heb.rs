@@ -95,8 +95,8 @@ pub async fn find_vaccination_locations(home_coordinates: &Coordinate, distance_
 }
 
 /// Automatically selects date and time
-pub async fn auto_signup(url: &str, headless: bool, profile: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let mut browser = goto(url, headless, profile).await?;
+pub async fn auto_signup(url: &str, mut browser: &mut Client) -> Result<(), Box<dyn std::error::Error>> {
+    goto(url, &mut browser).await?;
     let page_1 = handle_page_1(&mut browser).await?;
     if !page_1 {
         return Ok(());
