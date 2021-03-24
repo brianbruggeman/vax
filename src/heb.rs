@@ -95,31 +95,32 @@ pub async fn find_vaccination_locations(home_coordinates: &Coordinate, distance_
 }
 
 /// Automatically selects date and time
-pub async fn auto_signup(url: &str, mut browser: &mut Client, fast: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn auto_signup(url: &str, mut browser: &mut Client, fast: bool) -> Result<bool, Box<dyn std::error::Error>> {
     goto(url, &mut browser).await?;
     let page_1 = handle_page_1(&mut browser, fast).await?;
     if !page_1 {
-        return Ok(());
+        return Ok(false);
     }
     wait_for_human_entry(&mut browser).await;
-    Ok(())
+    Ok(true)
 }
 
-async fn wait_for_human_entry(mut browser: &mut Client) {
+async fn wait_for_human_entry(mut browser: &mut Client) -> bool {
     let start = time::Instant::now();
     let end = time::Duration::from_secs(60 * 10);
     let poll_time = time::Duration::from_secs(1);
     loop {
         if start.elapsed().as_secs() >= end.as_secs() {
-            break;
+            warn!("Human took wayyy too long to enter data...bad human");
+            return false;
         }
         let gone = detect_empty(&mut browser).await;
         if gone {
-            break;
+            return false;
         }
         let error = detect_error(&mut browser).await;
         if error {
-            break;
+            return false;
         }
         thread::sleep(poll_time);
     }
@@ -226,6 +227,9 @@ async fn handle_page_1(mut browser: &mut Client, fast: bool) -> Result<bool, Box
 
 pub async fn detect_error(browser: &mut Client) -> bool {
     let errors = [
+        "There are no available time slots.",
+        "No time selected.",
+        "No date selected.",
         "This timeslot is full.",
         "Appointments are no longer available for this location.",
         "We could not verify that you are a human. Please try again from a different browser, computer, internet connection, or at another time.",
