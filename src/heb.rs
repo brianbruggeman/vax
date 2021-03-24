@@ -3,7 +3,7 @@
 
 // /////////////////////////////////////////////////////////////////////
 use std::iter::Iterator;
-use std::{thread, time};
+use std::{env, thread, time};
 
 use fantoccini::{elements::Element, Client, Locator};
 use geoutils::Location;
@@ -95,9 +95,9 @@ pub async fn find_vaccination_locations(home_coordinates: &Coordinate, distance_
 }
 
 /// Automatically selects date and time
-pub async fn auto_signup(url: &str, mut browser: &mut Client) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn auto_signup(url: &str, mut browser: &mut Client, fast: bool) -> Result<(), Box<dyn std::error::Error>> {
     goto(url, &mut browser).await?;
-    let page_1 = handle_page_1(&mut browser).await?;
+    let page_1 = handle_page_1(&mut browser, fast).await?;
     if !page_1 {
         return Ok(());
     }
@@ -125,7 +125,7 @@ async fn wait_for_human_entry(mut browser: &mut Client) {
     }
 }
 
-async fn handle_page_1(mut browser: &mut Client) -> Result<bool, Box<dyn std::error::Error>> {
+async fn handle_page_1(mut browser: &mut Client, fast: bool) -> Result<bool, Box<dyn std::error::Error>> {
     let mut rng = rand::thread_rng();
     // Loop until the website is in a good condition for processing; the javascript takes some time to load from the
     // remote service and is not completely available until after some time.
@@ -142,7 +142,7 @@ async fn handle_page_1(mut browser: &mut Client) -> Result<bool, Box<dyn std::er
         }
         for (index, element) in comboboxes.iter().enumerate() {
             let mut element = element.clone();
-            click(&mut element, &mut rng).await?;
+            click(&mut element, &mut rng, fast).await?;
             let errors_found = detect_error(&mut browser).await;
             if errors_found {
                 return Ok(false);
@@ -152,7 +152,7 @@ async fn handle_page_1(mut browser: &mut Client) -> Result<bool, Box<dyn std::er
                 // Any is perfectly acceptible for right now for the type of shot.
                 // TODO: allow for selection
                 let mut e = browser.find(Locator::Css("lightning-combobox")).await?;
-                click(&mut e, &mut rng).await?;
+                click(&mut e, &mut rng, fast).await?;
                 selected_shot = true;
             } else if index == 1 && !selected_date {
                 // The second element represents the available dates for the shot
@@ -172,7 +172,7 @@ async fn handle_page_1(mut browser: &mut Client) -> Result<bool, Box<dyn std::er
                         }
                     }
                     if date_found {
-                        click(&mut item, &mut rng).await?;
+                        click(&mut item, &mut rng, fast).await?;
                         selected_date = true;
                         break;
                     }
@@ -194,7 +194,7 @@ async fn handle_page_1(mut browser: &mut Client) -> Result<bool, Box<dyn std::er
                         }
                     }
                     if date_found {
-                        click(&mut item, &mut rng).await?;
+                        click(&mut item, &mut rng, fast).await?;
                         selected_time = true;
                         break;
                     }
@@ -213,7 +213,7 @@ async fn handle_page_1(mut browser: &mut Client) -> Result<bool, Box<dyn std::er
             std::fs::write(&file_path, &contents)?;
 
             let mut button = browser.find(Locator::Css("[title=\"Continue\"]")).await?;
-            click(&mut button, &mut rng).await?;
+            click(&mut button, &mut rng, fast).await?;
             let source_contains_error = detect_error(&mut browser).await;
             if source_contains_error {
                 return Ok(false);
@@ -246,12 +246,14 @@ pub async fn detect_error(browser: &mut Client) -> bool {
     false
 }
 
-pub async fn click(element: &mut Element, rng: &mut ThreadRng) -> Result<(), Box<dyn std::error::Error>> {
-    let min_click: u64 = 75;
-    let max_click: u64 = 300;
-    let wait_ms: u64 = rng.gen_range(min_click..max_click);
-    let duration = std::time::Duration::from_millis(wait_ms);
-    std::thread::sleep(duration);
+pub async fn click(element: &mut Element, rng: &mut ThreadRng, fast: bool) -> Result<(), Box<dyn std::error::Error>> {
+    if !fast {
+        let min_click: u64 = env::var("MIN_CLICK_MS").unwrap_or_else(|_| "75".to_string()).parse().unwrap_or(75);
+        let max_click: u64 = env::var("MAX_CLICK_MS").unwrap_or_else(|_| "300".to_string()).parse().unwrap_or(300);
+        let wait_ms: u64 = rng.gen_range(min_click..max_click);
+        let duration = std::time::Duration::from_millis(wait_ms);
+        std::thread::sleep(duration);
+    }
     element.clone().click().await?;
     Ok(())
 }

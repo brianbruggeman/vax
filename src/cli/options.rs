@@ -36,6 +36,10 @@ pub struct CliOptions {
     #[structopt(long)]
     pub headless: bool,
 
+    /// Disables extra logic to fake out recaptcha    
+    #[structopt(long)]
+    pub fast: bool,
+
     /// Auto select time and date
     #[structopt(long)]
     pub auto: bool,

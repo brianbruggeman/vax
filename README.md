@@ -37,6 +37,7 @@ USAGE:
 
 FLAGS:
         --auto           Auto select time and date
+        --fast           Disables extra logic to fake out recaptcha
     -h, --help           Prints help information
         --headless       Run in headless mode
         --hide-signup    Only display sign-up link; do not open browser

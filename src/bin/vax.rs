@@ -87,7 +87,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // Execute the future, blocking the current thread until completion
                 if options.auto {
                     let url = l.url.clone();
-                    auto_signup(&url, &mut browser).await?;
+                    auto_signup(&url, &mut browser, options.fast).await?;
                     info!("Got one.");
                 } else if !options.hide_signup {
                     webbrowser::open(&l.url.clone()).unwrap();
